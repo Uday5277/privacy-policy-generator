@@ -2,9 +2,12 @@ name: CI-CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - "*"               # run for all branches (main, develop, feature/*, etc.)
   pull_request:
-    branches: [main]
+    branches:
+      - main
+
 
 jobs:
   build:
