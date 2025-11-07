@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Privacy Policy Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f5f6fa; color:#222; }
+    .container { max-width:900px; margin:20px auto; padding:16px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    h1 { font-size:18px; margin:0; }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; min-width:0; }
+    .panel { padding:12px; border:1px solid #eee; border-radius:6px; background:#fff; }
+    label { display:block; margin-bottom:6px; font-weight:600; }
+    input[type=text], input[type=email], select, textarea { width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:8px; }
+    button { padding:8px 12px; border-radius:6px; border:0; background:#2563eb; color:#fff; cursor:pointer; }
+    button.secondary { background:#6b7280; }
+    .nav { display:flex; gap:8px; margin-top:8px; }
+    .questions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+    .category { min-width:160px; }
+    .preview { white-space:pre-wrap; font-family:monospace; }
+    @media (max-width:700px) {
+      .row { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Privacy Policy Generator</h1>
+      <div>
+        <button id="loginBtn">Admin Login</button>
+      </div>
+    </header>
+
+    <div class="row">
+      <div class="col panel">
+        <h3>Questionnaire</h3>
+        <div id="questionsContainer">Loading questions...</div>
+        <div class="nav">
+          <button id="prevBtn" class="secondary">Prev</button>
+          <button id="nextBtn">Next</button>
+          <button id="previewBtn" class="secondary">Live Preview</button>
+        </div>
+      </div>
+
+      <div class="col panel">
+        <h3>Preview & Export</h3>
+        <div id="preview" class="preview">No preview yet.</div>
+        <div style="margin-top:8px;">
+          <button id="editBtn" class="secondary">Inline Edit</button>
+          <button id="exportPdf">Export PDF</button>
+          <button id="exportDocx" class="secondary">Export DOCX</button>
+        </div>
+      </div>
+    </div>
+
+    <section style="margin-top:16px;">
+      <h3>Template Management (Admin)</h3>
+      <div id="adminPanel">Login to manage templates and questions.</div>
+    </section>
+  </div>
+
+  <script>
+    let questions = [];
+    let categorized = {};
+    let answers = {};
+    let qIndex = 0;
+    let categories = [];
+    let currentCategoryIndex = 0;
+    let token = null;
+
+    async function fetchQuestions() {
+      const res = await fetch('/api/questions');
+      const data = await res.json();
+      questions = data.questions || [];
+      categorized = data.categorized || {};
+      categories = Object.keys(categorized);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+      if (categories.length === 0) {
+        container.innerText = 'No questions found.';
+        return;
+      }
+      // show one category at a time to keep navigation simple
+      const catName = categories[currentCategoryIndex];
+      const catQs = categorized[catName] || [];
+      const catDiv = document.createElement('div');
+      catDiv.className = 'category';
+      const title = document.createElement('h4');
+      title.innerText = catName;
+      catDiv.appendChild(title);
+      catQs.forEach(q => {
+        const label = document.createElement('label');
+        label.innerText = q.label;
+        let input;
+        if (q.type === 'boolean') {
+          input = document.createElement('select');
+          input.innerHTML = '<option value="true">Yes</option><option value="false">No</option>';
+          input.value = answers[q.key] !== undefined ? String(answers[q.key]) : 'true';
+          input.onchange = () => answers[q.key] = (input.value === 'true');
+        } else {
+          input = document.createElement('input');
+          input.type = q.type === 'email' ? 'email' : 'text';
+          input.value = answers[q.key] || '';
+          input.oninput = () => answers[q.key] = input.value;
+        }
+        catDiv.appendChild(label);
+        catDiv.appendChild(input);
+      });
+      container.appendChild(catDiv);
+    }
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentCategoryIndex > 0) currentCategoryIndex--;
+      renderQuestion();
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentCategoryIndex < categories.length - 1) currentCategoryIndex++;
+      renderQuestion();
+    });
+
+    document.getElementById('previewBtn').addEventListener('click', async () => {
+      const res = await fetch('/api/preview', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({answers})
+      });
+      const data = await res.json();
+      document.getElementById('preview').innerText = data.policy || 'No preview';
+    });
+
+    document.getElementById('editBtn').addEventListener('click', () => {
+      const p = document.getElementById('preview');
+      const ta = document.createElement('textarea');
+      ta.style.width = '100%';
+      ta.style.height = '200px';
+      ta.value = p.innerText;
+      p.parentNode.replaceChild(ta, p);
+      const save = document.createElement('button');
+      save.innerText = 'Save Inline Edit';
+      save.style.marginTop = '8px';
+      save.onclick = () => {
+        const newPreview = document.createElement('div');
+        newPreview.id = 'preview';
+        newPreview.className = 'preview';
+        newPreview.innerText = ta.value;
+        ta.parentNode.replaceChild(newPreview, ta);
+        save.remove();
+      };
+      ta.parentNode.appendChild(save);
+    });
+
+    document.getElementById('exportPdf').addEventListener('click', async () => {
+      const res = await fetch('/api/export/pdf', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({answers})
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'privacy_policy.pdf'; a.click();
+      } else {
+        alert('Export failed');
+      }
+    });
+
+    document.getElementById('exportDocx').addEventListener('click', async () => {
+      const res = await fetch('/api/export/docx', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({answers})
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'privacy_policy.docx'; a.click();
+      } else {
+        alert('Export failed');
+      }
+    });
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const u = prompt('Admin username', 'admin');
+      const p = prompt('Admin password', 'admin');
+      const res = await fetch('/api/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username:u,password:p})
+      });
+      if (res.status === 200) {
+        const data = await res.json();
+        token = data.token;
+        alert('Login success. Token valid for '+ data.expires_in + 's.');
+        showAdminPanel();
+      } else {
+        alert('Login failed');
+      }
+    });
+
+    function showAdminPanel(){
+      const panel = document.getElementById('adminPanel');
+      panel.innerHTML = '';
+      const btnQs = document.createElement('button'); btnQs.innerText = 'Add question'; 
+      btnQs.onclick = async () => {
+        const id = prompt('id (unique)', 'q' + Date.now());
+        const label = prompt('label', 'New question');
+        const key = prompt('key', 'new_key');
+        const category = prompt('category', 'Misc');
+        const type = prompt('type (text|boolean|email)', 'text');
+        const body = {id,label,key,category,type,required:false};
+        const res = await fetch('/api/questions', {
+          method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body: JSON.stringify(body)
+        });
+        if (res.status === 201) {
+          alert('Added');
+          fetchQuestions();
+        } else {
+          alert('Error adding question');
+        }
+      };
+      const btnTpl = document.createElement('button'); btnTpl.innerText = 'Add template';
+      btnTpl.onclick = async () => {
+        const id = prompt('template id', 'tpl' + Date.now());
+        const name = prompt('template name', 'My Template');
+        const res = await fetch('/api/templates', {
+          method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body: JSON.stringify({id,name,clauses:{default_footer:'Default footer'}})
+        });
+        if (res.status === 201) { alert('Template added'); } else alert('error');
+      };
+      panel.appendChild(btnQs);
+      panel.appendChild(btnTpl);
+    }
+
+    // initial load
+    fetchQuestions();
+  </script>
+</body>
+</html>

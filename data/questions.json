@@ -1,0 +1,50 @@
+[
+  {
+    "id": "q1",
+    "category": "Basics",
+    "label": "Company name",
+    "key": "company_name",
+    "type": "text",
+    "required": true
+  },
+  {
+    "id": "q2",
+    "category": "Contact",
+    "label": "Contact email",
+    "key": "contact_email",
+    "type": "email",
+    "required": false
+  },
+  {
+    "id": "q3",
+    "category": "Data",
+    "label": "Do you collect personal data?",
+    "key": "collects_personal_data",
+    "type": "boolean",
+    "required": true
+  },
+  {
+    "id": "q4",
+    "category": "Tracking",
+    "label": "Do you use cookies?",
+    "key": "uses_cookies",
+    "type": "boolean",
+    "required": true
+  },
+  {
+    "id": "q5",
+    "category": "Legal",
+    "label": "Jurisdiction (country)",
+    "key": "jurisdiction",
+    "type": "text",
+    "required": false
+  },
+  {
+    "id": "q1762520992764",
+    "label": "New question",
+    "key": "new_key",
+    "category": "Misc",
+    "type": "text",
+    "required": false
+  }
+]

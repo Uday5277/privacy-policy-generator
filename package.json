@@ -1,0 +1,14 @@
+{
+  "name": "privacy-policy-generator",
+  "version": "1.0.0",
+  "description": "Flask backend + Node CI shim for university CI",
+  "scripts": {
+    "lint": "node lint.js",
+    "test": "node test.js",
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0"
+  }
+}

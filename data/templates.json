@@ -1,0 +1,20 @@
+[
+  {
+    "id": "default",
+    "name": "Minimal template",
+    "clauses": {
+      "collects_personal_data_true": "We collect personal information such as name and email required to provide services.",
+      "collects_personal_data_false": "We do not collect personal data beyond anonymous metrics.",
+      "uses_cookies_true": "We use cookies and similar technologies to improve the experience.",
+      "uses_cookies_false": "We do not use cookies.",
+      "default_footer": "By using our service you accept this policy."
+    }
+  },
+  {
+    "id": "tpl1762521169632",
+    "name": "My Template",
+    "clauses": {
+      "default_footer": "Default footer"
+    }
+  }
+]
