@@ -3,11 +3,13 @@ name: CI-CD Pipeline
 on:
   push:
     branches:
-      - "*"               # run for all branches (main, develop, feature/*, etc.)
+      - main
+      - develop
+      - 'feature/*'    # <--- ensures all feature branches trigger CI/CD
   pull_request:
     branches:
       - main
-
+  
 
 jobs:
   build:
