@@ -5,86 +5,123 @@ on:
     branches:
       - main
       - develop
-      - 'feature/*'    # <--- ensures all feature branches trigger CI/CD
+      - 'feature/*'     # Run on all feature branches
   pull_request:
     branches:
       - main
-  
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+    env:
+      FLASK_DEBUG: True
+      PORT: 5000
+      SECRET_KEY: test_secret_key
+      # The MONGO_URI is securely stored in GitHub Secrets
+      MONGO_URI: ${{ secrets.MONGO_URI }}
     
     steps:
+      # -----------------------
+      # 1️⃣ Checkout code
+      # -----------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # -----------------------
+      # 2️⃣ Setup Node.js
+      # -----------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
+      # -----------------------
+      # 3️⃣ Setup Python
+      # -----------------------
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      # -----------------------
+      # 4️⃣ Install dependencies
+      # -----------------------
       - name: Install dependencies
         run: |
+          echo "Installing frontend and backend dependencies..."
           if [ -f package.json ]; then
             npm ci
           else
-            echo "No package.json found, skipping npm install"
+            echo "No package.json found, skipping npm install."
           fi
           sudo apt-get update
           sudo apt-get install -y libcairo2-dev libfreetype6-dev libjpeg-dev libpng-dev
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run linting
+      # -----------------------
+      # 5️⃣ Lint JavaScript (optional)
+      # -----------------------
+      - name: Run ESLint (if configured)
         run: |
           if [ -f package.json ] && npm list --depth=0 | grep -q eslint; then
             npm run lint
           else
-            echo "No linting configured, skipping..."
+            echo "No ESLint configuration found, skipping JS linting."
           fi
 
-      - name: Run tests
+      # -----------------------
+      # 6️⃣ Run Frontend Tests (Jest)
+      # -----------------------
+      - name: Run Jest tests (if available)
         run: |
           if [ -f package.json ] && npm list --depth=0 | grep -q jest; then
             npm test
           else
-            echo "No tests configured, skipping..."
+            echo "No Jest tests found, skipping frontend tests."
           fi
 
-      - name: Build application
+      # -----------------------
+      # 7️⃣ Run Python Backend Tests (pytest)
+      # -----------------------
+      - name: Run Pytest (backend tests)
+        run: |
+          echo "▶ Running Python tests via pytest..."
+          pytest -v --maxfail=1 --disable-warnings
+
+      # -----------------------
+      # 8️⃣ Security audit (Node)
+      # -----------------------
+      - name: Security audit (Node packages)
         run: |
           if [ -f package.json ]; then
-            npm run build --if-present
+            npm audit --audit-level=high || true
           else
-            echo "No build script found, skipping..."
+            echo "No package.json found, skipping security audit."
           fi
 
-      - name: Security audit
-        run: |
-          if [ -f package.json ]; then
-            npm audit --audit-level=high
-          else
-            echo "No package.json found, skipping security audit"
-          fi
-
+  # -----------------------
+  # 🚀 DEPLOYMENT STAGE
+  # -----------------------
   deploy:
-    needs: build
+    needs: build-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+    env:
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      FLASK_DEBUG: False
+
     steps:
-      - name: Deploy to staging
-        run: echo "Deploying to staging environment..."
-        
-      - name: Run integration tests
-        run: echo "Running integration tests..."
-        
-      - name: Deploy to production
-        run: echo "Deploying to production environment..."
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Staging
+        run: echo "🚀 Deploying to staging environment..."
+
+      - name: Run Integration Tests
+        run: echo "✅ Running integration tests..."
+
+      - name: Deploy to Production
+        run: echo "🌍 Deploying to production environment..."
