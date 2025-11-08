@@ -387,25 +387,1056 @@
 
 
 
-#testing for categorical questions :
+# # #testing for categorical questions :
 
-# src/app.py
-from flask import Flask, jsonify
+# # # src/app.py
+# # from flask import Flask, jsonify
 
-app = Flask(__name__)
+# # app = Flask(__name__)
 
-@app.route('/api/questions')
+# # @app.route('/api/questions')
+# # def get_questions():
+# #     categorized_questions = {
+# #         "Personal Info": [
+# #             {"id": "q1", "label": "What is your name?", "type": "text"},
+# #             {"id": "q2", "label": "Email address", "type": "email"}
+# #         ],
+# #         "Privacy Preferences": [
+# #             {"id": "q3", "label": "Do you accept cookies?", "type": "boolean"}
+# #         ]
+# #     }
+# #     return jsonify({"categorized": categorized_questions})
+
+# # if __name__ == "__main__":
+# #     app.run(debug=True)
+
+
+
+
+
+
+
+
+# from flask import Flask, jsonify, request, send_file
+# from datetime import datetime, timedelta, UTC
+# from pymongo import MongoClient
+# from dotenv import load_dotenv
+# import os, io
+# from reportlab.pdfgen import canvas
+# from docx import Document
+
+# app = Flask(__name__, static_folder="../static", static_url_path="/")
+
+# # ------------------------------
+# # MongoDB Setup
+# # ------------------------------
+# load_dotenv()
+# client = MongoClient(os.getenv("MONGO_URI"))
+# db = client["privacy_policy_db"]
+# questions_col = db["questions"]
+# templates_col = db["templates"]
+
+# # Admin token management
+# ADMIN_TOKEN = None
+# TOKEN_EXPIRY = None
+
+
+# # ------------------------------
+# # Frontend Route
+# # ------------------------------
+# @app.route("/")
+# def home():
+#     return app.send_static_file("index.html")
+
+
+# # ------------------------------
+# # API Routes
+# # ------------------------------
+
+# @app.route("/api/questions", methods=["GET"])
+# def get_questions():
+#     """Fetch categorized questions from MongoDB."""
+#     questions = list(questions_col.find({}, {"_id": 0}))
+#     categorized = {}
+#     for q in questions:
+#         categorized.setdefault(q["category"], []).append(q)
+#     return jsonify({"questions": questions, "categorized": categorized})
+
+
+# @app.route("/api/questions", methods=["POST"])
+# def add_question():
+#     """Add a new question (admin only)."""
+#     token = request.headers.get("Authorization")
+#     if not valid_token(token):
+#         return jsonify({"error": "Unauthorized"}), 401
+#     data = request.get_json()
+#     if not data.get("category") or not data.get("question"):
+#         return jsonify({"error": "Missing fields"}), 400
+#     questions_col.insert_one(data)
+#     return jsonify({"message": "Question added"}), 201
+
+
+# @app.route("/api/questions/<string:key>", methods=["DELETE"])
+# def delete_question(key):
+#     """Delete question by key (admin only)."""
+#     token = request.headers.get("Authorization")
+#     if not valid_token(token):
+#         return jsonify({"error": "Unauthorized"}), 401
+#     result = questions_col.delete_one({"key": key})
+#     if result.deleted_count == 0:
+#         return jsonify({"error": "Not found"}), 404
+#     return jsonify({"message": "Question deleted"}), 200
+
+
+# @app.route("/api/templates", methods=["GET"])
+# def get_templates():
+#     templates = list(templates_col.find({}, {"_id": 0}))
+#     return jsonify({"templates": templates})
+
+
+# @app.route("/api/templates", methods=["POST"])
+# def add_template():
+#     """Add a new template (admin only)."""
+#     token = request.headers.get("Authorization")
+#     if not valid_token(token):
+#         return jsonify({"error": "Unauthorized"}), 401
+#     data = request.get_json()
+#     if not data.get("title") or not data.get("content"):
+#         return jsonify({"error": "Missing fields"}), 400
+#     templates_col.insert_one(data)
+#     return jsonify({"message": "Template added"}), 201
+
+
+# @app.route("/api/templates/<string:title>", methods=["DELETE"])
+# def delete_template(title):
+#     """Delete a template by title."""
+#     token = request.headers.get("Authorization")
+#     if not valid_token(token):
+#         return jsonify({"error": "Unauthorized"}), 401
+#     result = templates_col.delete_one({"title": title})
+#     if result.deleted_count == 0:
+#         return jsonify({"error": "Not found"}), 404
+#     return jsonify({"message": "Template deleted"}), 200
+
+
+# @app.route("/api/login", methods=["POST"])
+# def login():
+#     """Admin login."""
+#     creds = request.get_json()
+#     if creds["username"] == "admin" and creds["password"] == "admin":
+#         global ADMIN_TOKEN, TOKEN_EXPIRY
+#         ADMIN_TOKEN = "valid_token"
+#         TOKEN_EXPIRY = datetime.now(UTC) + timedelta(seconds=900)
+#         return jsonify({"message": "Login success", "token": ADMIN_TOKEN, "expiry": 900})
+#     return jsonify({"error": "Invalid credentials"}), 403
+
+
+# def valid_token(token):
+#     global ADMIN_TOKEN, TOKEN_EXPIRY
+#     return token == ADMIN_TOKEN and TOKEN_EXPIRY and TOKEN_EXPIRY > datetime.now(UTC)
+
+
+# # ------------------------------
+# # Generate Privacy Policy Text
+# # ------------------------------
+# def generate_policy_text(answers, template_title="Default Template"):
+#     tpl = templates_col.find_one({"title": template_title})
+#     if not tpl:
+#         return "Default Privacy Policy template not found."
+
+#     text = tpl["content"]
+#     replacements = {
+#         "{company_name}": answers.get("company_name", "Your Company"),
+#         "{contact_email}": answers.get("contact_email", "contact@example.com"),
+#         "{cookies_text}": "use cookies" if answers.get("uses_cookies") else "do not use cookies",
+#         "{jurisdiction}": answers.get("jurisdiction", "your jurisdiction"),
+#         "{date}": datetime.now(UTC).date().isoformat()
+#     }
+
+#     for key, val in replacements.items():
+#         text = text.replace(key, str(val))
+
+#     return text
+
+
+# @app.route("/api/preview", methods=["POST"])
+# def preview_policy():
+#     """Generate live preview of privacy policy."""
+#     data = request.get_json()
+#     answers = data.get("answers", {})
+#     policy_text = generate_policy_text(answers)
+#     return jsonify({"preview": policy_text})
+
+
+# @app.route("/api/export/pdf", methods=["POST"])
+# def export_pdf():
+#     """Export privacy policy as PDF."""
+#     data = request.get_json()
+#     buffer = io.BytesIO()
+#     p = canvas.Canvas(buffer)
+#     y = 800
+#     for line in data.get("content", "").splitlines():
+#         p.drawString(100, y, line)
+#         y -= 15
+#     p.save()
+#     buffer.seek(0)
+#     return send_file(buffer, as_attachment=True, download_name="policy.pdf", mimetype="application/pdf")
+
+
+# @app.route("/api/export/docx", methods=["POST"])
+# def export_docx():
+#     """Export privacy policy as DOCX."""
+#     data = request.get_json()
+#     doc = Document()
+#     doc.add_heading("Privacy Policy", 0)
+#     doc.add_paragraph(data.get("content", ""))
+#     file_stream = io.BytesIO()
+#     doc.save(file_stream)
+#     file_stream.seek(0)
+#     return send_file(file_stream, as_attachment=True, download_name="policy.docx")
+
+
+# @app.route("/api/health")
+# def health():
+#     """CI/CD health check route."""
+#     return jsonify({"status": "ok", "time": datetime.now(UTC).isoformat()})
+
+
+# if __name__ == "__main__":
+#     app.run(debug=True)
+
+
+
+
+
+
+"""
+Privacy Policy Generator - Flask Backend
+Complete implementation of all user stories with CI/CD compliance
+
+Story Mapping:
+- IM-2: Categorized Questions (GET /api/questions)
+- IM-3: Form Navigation (handled by frontend, backend supports it)
+- IM-6: Insert Details / Template Selection (GET /api/templates)
+- IM-7: Clause Logic (generate_policy_text function)
+- IM-9: Live Preview (POST /api/preview)
+- IM-10: Inline Edit (handled by frontend)
+- IM-12: PDF Export (POST /api/export/pdf)
+- IM-13: DOCX Export (POST /api/export/docx)
+- IM-15: Manage Questions (POST/PUT/DELETE /api/questions)
+- IM-16: Manage Templates (POST/PUT/DELETE /api/templates)
+- IM-18: HTTPS Security (security headers)
+- IM-19: User Login (POST /api/login)
+- IM-20: Auto Logout (session expiry logic)
+- IM-22: Fast Response (database indexing, caching)
+- IM-23: Responsive UI (frontend handles, backend supports)
+"""
+
+from flask import Flask, jsonify, request, send_file
+from datetime import datetime, timedelta, UTC
+from pymongo import MongoClient
+from dotenv import load_dotenv
+import os
+import io
+import secrets
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.units import inch
+from docx import Document
+from docx.shared import Pt, RGBColor
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# ==============================
+# Flask App Configuration
+# ==============================
+app = Flask(__name__, static_folder="../static", static_url_path="/")
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max request size
+
+# ==============================
+# MongoDB Setup
+# ==============================
+load_dotenv()
+
+# Get MongoDB URI from environment
+MONGO_URI = os.getenv("MONGO_URI")
+if not MONGO_URI:
+    raise ValueError("MONGO_URI not found in environment variables. Please check your .env file.")
+
+# Connect to MongoDB
+try:
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    # Test connection
+    client.admin.command('ping')
+    print("✅ Successfully connected to MongoDB")
+except Exception as e:
+    print(f"❌ Failed to connect to MongoDB: {e}")
+    raise
+
+# Database and Collections
+db = client["privacy_policy_db"]
+questions_col = db["questions"]
+templates_col = db["templates"]
+users_col = db["users"]
+sessions_col = db["sessions"]
+
+# Create indexes for performance (IM-22: Fast Response)
+questions_col.create_index("key", unique=True)
+questions_col.create_index("category")
+templates_col.create_index("title", unique=True)
+sessions_col.create_index("token")
+sessions_col.create_index("expiry", expireAfterSeconds=0)  # TTL index
+
+# ==============================
+# Security Headers (IM-18: HTTPS Security)
+# ==============================
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses."""
+    # Enforce HTTPS in production
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Prevent clickjacking
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # Prevent MIME sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # XSS Protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = "default-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;"
+    # Referrer Policy
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # CORS headers (if needed)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    
+    return response
+
+
+# ==============================
+# Session Management (In-Memory Cache)
+# ==============================
+ADMIN_SESSIONS = {}  # In-memory cache for active sessions
+
+
+def cleanup_expired_sessions():
+    """Remove expired sessions from memory cache."""
+    current_time = datetime.now(UTC)
+    expired_tokens = [token for token, session in ADMIN_SESSIONS.items() 
+                     if session['expiry'] < current_time]
+    for token in expired_tokens:
+        del ADMIN_SESSIONS[token]
+
+
+# ==============================
+# Initialize Default Admin User (IM-19: User Login)
+# ==============================
+def init_admin_user():
+    """Initialize default admin user if not exists."""
+    try:
+        if users_col.count_documents({"username": "admin"}) == 0:
+            users_col.insert_one({
+                "username": "admin",
+                "password": generate_password_hash("admin"),
+                "role": "admin",
+                "created_at": datetime.now(UTC)
+            })
+            print("✅ Default admin user created (username: admin, password: admin)")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not create default admin user: {e}")
+
+init_admin_user()
+
+
+# ==============================
+# Frontend Route
+# ==============================
+@app.route("/")
+def home():
+    """Serve the main HTML page."""
+    return app.send_static_file("index.html")
+
+
+# ==============================
+# Authentication Helpers
+# ==============================
+def valid_token(token):
+    """
+    Check if authentication token is valid.
+    IM-19: User Login
+    IM-20: Auto Logout (15-minute expiry)
+    """
+    if not token:
+        return False
+    
+    # Cleanup expired sessions
+    cleanup_expired_sessions()
+    
+    # Check in-memory cache first (IM-22: Fast Response)
+    session = ADMIN_SESSIONS.get(token)
+    if session and session["expiry"] > datetime.now(UTC):
+        return True
+    
+    # Check database as fallback
+    try:
+        session = sessions_col.find_one({"token": token})
+        if session and session["expiry"] > datetime.now(UTC):
+            # Cache it for faster access
+            ADMIN_SESSIONS[token] = {
+                "username": session["username"],
+                "expiry": session["expiry"]
+            }
+            return True
+    except Exception as e:
+        print(f"Error checking token: {e}")
+    
+    # Clean up invalid/expired session
+    if token in ADMIN_SESSIONS:
+        del ADMIN_SESSIONS[token]
+    try:
+        sessions_col.delete_one({"token": token})
+    except:
+        pass
+    
+    return False
+
+
+# ==============================
+# Authentication Routes (IM-19: User Login, IM-20: Auto Logout)
+# ==============================
+@app.route("/api/login", methods=["POST"])
+def login():
+    """
+    Admin login endpoint.
+    IM-19: User Login
+    IM-20: Auto Logout (creates session with 15-minute expiry)
+    """
+    try:
+        creds = request.get_json()
+        
+        # Validate input
+        if not creds or not creds.get("username") or not creds.get("password"):
+            return jsonify({"error": "Missing username or password"}), 400
+        
+        # Find user in database
+        user = users_col.find_one({"username": creds["username"]})
+        
+        # Verify credentials
+        if not user or not check_password_hash(user["password"], creds["password"]):
+            return jsonify({"error": "Invalid credentials"}), 403
+        
+        # Generate secure session token
+        token = secrets.token_urlsafe(32)
+        expiry = datetime.now(UTC) + timedelta(seconds=900)  # 15 minutes (IM-20)
+        
+        # Store session in database
+        session_data = {
+            "token": token,
+            "username": user["username"],
+            "role": user.get("role", "admin"),
+            "expiry": expiry,
+            "created_at": datetime.now(UTC)
+        }
+        sessions_col.insert_one(session_data)
+        
+        # Cache session in memory for fast access (IM-22)
+        ADMIN_SESSIONS[token] = {
+            "username": user["username"],
+            "expiry": expiry
+        }
+        
+        return jsonify({
+            "message": "Login successful",
+            "token": token,
+            "expiry": 900,  # seconds
+            "username": user["username"]
+        }), 200
+        
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({"error": "Login failed"}), 500
+
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    """
+    Logout endpoint - invalidates session.
+    IM-19: User Login
+    """
+    try:
+        token = request.headers.get("Authorization")
+        if token:
+            # Remove from memory cache
+            if token in ADMIN_SESSIONS:
+                del ADMIN_SESSIONS[token]
+            # Remove from database
+            sessions_col.delete_one({"token": token})
+        
+        return jsonify({"message": "Logged out successfully"}), 200
+    except Exception as e:
+        print(f"Logout error: {e}")
+        return jsonify({"error": "Logout failed"}), 500
+
+
+# ==============================
+# Questions API Routes (IM-2: Categorized Questions, IM-15: Manage Questions)
+# ==============================
+@app.route("/api/questions", methods=["GET"])
 def get_questions():
-    categorized_questions = {
-        "Personal Info": [
-            {"id": "q1", "label": "What is your name?", "type": "text"},
-            {"id": "q2", "label": "Email address", "type": "email"}
-        ],
-        "Privacy Preferences": [
-            {"id": "q3", "label": "Do you accept cookies?", "type": "boolean"}
-        ]
-    }
-    return jsonify({"categorized": categorized_questions})
+    """
+    Fetch all questions, categorized.
+    IM-2: Categorized Questions
+    IM-22: Fast Response (uses database indexing)
+    """
+    try:
+        # Fetch questions sorted by order
+        questions = list(questions_col.find({}, {"_id": 0}).sort("order", 1))
+        
+        # Categorize questions
+        categorized = {}
+        for q in questions:
+            category = q.get("category", "General")
+            if category not in categorized:
+                categorized[category] = []
+            categorized[category].append(q)
+        
+        return jsonify({
+            "questions": questions,
+            "categorized": categorized
+        }), 200
+        
+    except Exception as e:
+        print(f"Error fetching questions: {e}")
+        return jsonify({"error": "Failed to fetch questions"}), 500
 
+
+@app.route("/api/questions", methods=["POST"])
+def add_question():
+    """
+    Add a new question (admin only).
+    IM-15: Manage Questions
+    """
+    # Check authentication
+    token = request.headers.get("Authorization")
+    if not valid_token(token):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ["key", "category", "question", "type"]
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields: key, category, question, type"}), 400
+        
+        # Check if key already exists
+        if questions_col.find_one({"key": data["key"]}):
+            return jsonify({"error": "Question with this key already exists"}), 409
+        
+        # Prepare question document
+        question_data = {
+            "key": data["key"],
+            "category": data["category"],
+            "question": data["question"],
+            "type": data["type"],
+            "required": data.get("required", False),
+            "order": data.get("order", 999),
+            "options": data.get("options", []),
+            "dependsOn": data.get("dependsOn", None),
+            "created_at": datetime.now(UTC)
+        }
+        
+        # Insert into database
+        questions_col.insert_one(question_data)
+        
+        return jsonify({"message": "Question added successfully"}), 201
+        
+    except Exception as e:
+        print(f"Error adding question: {e}")
+        return jsonify({"error": "Failed to add question"}), 500
+
+
+@app.route("/api/questions/<string:key>", methods=["PUT"])
+def update_question(key):
+    """
+    Update an existing question (admin only).
+    IM-15: Manage Questions
+    """
+    # Check authentication
+    token = request.headers.get("Authorization")
+    if not valid_token(token):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Prepare update document
+        update_data = {
+            "category": data.get("category"),
+            "question": data.get("question"),
+            "type": data.get("type"),
+            "required": data.get("required", False),
+            "order": data.get("order", 999),
+            "options": data.get("options", []),
+            "dependsOn": data.get("dependsOn"),
+            "updated_at": datetime.now(UTC)
+        }
+        
+        # Update in database
+        result = questions_col.update_one({"key": key}, {"$set": update_data})
+        
+        if result.matched_count == 0:
+            return jsonify({"error": "Question not found"}), 404
+        
+        return jsonify({"message": "Question updated successfully"}), 200
+        
+    except Exception as e:
+        print(f"Error updating question: {e}")
+        return jsonify({"error": "Failed to update question"}), 500
+
+
+@app.route("/api/questions/<string:key>", methods=["DELETE"])
+def delete_question(key):
+    """
+    Delete a question by key (admin only).
+    IM-15: Manage Questions
+    """
+    # Check authentication
+    token = request.headers.get("Authorization")
+    if not valid_token(token):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    try:
+        result = questions_col.delete_one({"key": key})
+        
+        if result.deleted_count == 0:
+            return jsonify({"error": "Question not found"}), 404
+        
+        return jsonify({"message": "Question deleted successfully"}), 200
+        
+    except Exception as e:
+        print(f"Error deleting question: {e}")
+        return jsonify({"error": "Failed to delete question"}), 500
+
+
+# ==============================
+# Templates API Routes (IM-6: Insert Details, IM-16: Manage Templates)
+# ==============================
+@app.route("/api/templates", methods=["GET"])
+def get_templates():
+    """
+    Get all available templates.
+    IM-6: Insert Details (Template Selection)
+    IM-22: Fast Response
+    """
+    try:
+        templates = list(templates_col.find({}, {"_id": 0}))
+        return jsonify({"templates": templates}), 200
+    except Exception as e:
+        print(f"Error fetching templates: {e}")
+        return jsonify({"error": "Failed to fetch templates"}), 500
+
+
+@app.route("/api/templates", methods=["POST"])
+def add_template():
+    """
+    Add a new template (admin only).
+    IM-16: Manage Templates
+    """
+    # Check authentication
+    token = request.headers.get("Authorization")
+    if not valid_token(token):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get("title") or not data.get("content"):
+            return jsonify({"error": "Missing required fields: title, content"}), 400
+        
+        # Check if template already exists
+        if templates_col.find_one({"title": data["title"]}):
+            return jsonify({"error": "Template with this title already exists"}), 409
+        
+        # Prepare template document
+        template_data = {
+            "title": data["title"],
+            "content": data["content"],
+            "description": data.get("description", ""),
+            "created_at": datetime.now(UTC)
+        }
+        
+        # Insert into database
+        templates_col.insert_one(template_data)
+        
+        return jsonify({"message": "Template added successfully"}), 201
+        
+    except Exception as e:
+        print(f"Error adding template: {e}")
+        return jsonify({"error": "Failed to add template"}), 500
+
+
+@app.route("/api/templates/<string:title>", methods=["PUT"])
+def update_template(title):
+    """
+    Update a template (admin only).
+    IM-16: Manage Templates
+    """
+    # Check authentication
+    token = request.headers.get("Authorization")
+    if not valid_token(token):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Prepare update document
+        update_data = {
+            "content": data.get("content"),
+            "description": data.get("description", ""),
+            "updated_at": datetime.now(UTC)
+        }
+        
+        # Update in database
+        result = templates_col.update_one({"title": title}, {"$set": update_data})
+        
+        if result.matched_count == 0:
+            return jsonify({"error": "Template not found"}), 404
+        
+        return jsonify({"message": "Template updated successfully"}), 200
+        
+    except Exception as e:
+        print(f"Error updating template: {e}")
+        return jsonify({"error": "Failed to update template"}), 500
+
+
+@app.route("/api/templates/<string:title>", methods=["DELETE"])
+def delete_template(title):
+    """
+    Delete a template by title (admin only).
+    IM-16: Manage Templates
+    """
+    # Check authentication
+    token = request.headers.get("Authorization")
+    if not valid_token(token):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    try:
+        result = templates_col.delete_one({"title": title})
+        
+        if result.deleted_count == 0:
+            return jsonify({"error": "Template not found"}), 404
+        
+        return jsonify({"message": "Template deleted successfully"}), 200
+        
+    except Exception as e:
+        print(f"Error deleting template: {e}")
+        return jsonify({"error": "Failed to delete template"}), 500
+
+
+# ==============================
+# Policy Generation (IM-7: Clause Logic)
+# ==============================
+def generate_policy_text(answers, template_title="Default Template"):
+    """
+    Generate privacy policy text with conditional clauses.
+    IM-7: Clause Logic
+    IM-9: Live Preview (used by preview endpoint)
+    """
+    try:
+        # Fetch template
+        tpl = templates_col.find_one({"title": template_title})
+        if not tpl:
+            return "Error: Template not found. Please ensure the template exists in the database."
+        
+        text = tpl["content"]
+        
+        # Basic replacements
+        replacements = {
+            "{company_name}": answers.get("company_name", "Your Company"),
+            "{contact_email}": answers.get("contact_email", "contact@example.com"),
+            "{website_url}": answers.get("website_url", "https://example.com"),
+            "{jurisdiction}": answers.get("jurisdiction", "your jurisdiction"),
+            "{date}": datetime.now(UTC).strftime("%B %d, %Y"),
+            "{data_retention}": answers.get("data_retention", "as required by law")
+        }
+        
+        # IM-7: Conditional Clause Logic
+        
+        # Cookies clause
+        uses_cookies = answers.get("uses_cookies")
+        if uses_cookies == "true" or uses_cookies == True or uses_cookies == "Yes":
+            replacements["{cookies_text}"] = "use cookies to enhance user experience and analyze website traffic"
+        else:
+            replacements["{cookies_text}"] = "do not use cookies"
+        
+        # Data collection clause
+        collects_data = answers.get("collects_personal_data")
+        if collects_data == "true" or collects_data == True or collects_data == "Yes":
+            data_types = answers.get("data_types", "name, email address, and other information you voluntarily provide")
+            replacements["{data_collection_text}"] = f"We collect the following types of personal data: {data_types}."
+        else:
+            replacements["{data_collection_text}"] = "We do not collect personal data from our users."
+        
+        # Data usage clause
+        replacements["{data_usage_text}"] = "We use your data to provide and improve our services, communicate with you regarding your account or our services, ensure security, and comply with legal obligations."
+        
+        # Third-party sharing clause
+        third_party = answers.get("third_party_sharing")
+        if third_party == "true" or third_party == True or third_party == "Yes":
+            replacements["{third_party_text}"] = "We may share your personal data with trusted third-party service providers who assist us in operating our website, conducting our business, or servicing you. These parties are obligated to keep your information confidential."
+        else:
+            replacements["{third_party_text}"] = "We do not share your personal data with third parties except as required by law."
+        
+        # User rights clause
+        user_rights = answers.get("user_rights", [])
+        if isinstance(user_rights, str):
+            user_rights = [user_rights]
+        if user_rights and len(user_rights) > 0:
+            rights_list = ", ".join(user_rights)
+            replacements["{user_rights_text}"] = f"Under applicable privacy laws, you have the following rights regarding your personal data: {rights_list}. To exercise these rights, please contact us using the information provided below."
+        else:
+            replacements["{user_rights_text}"] = "You have rights regarding your personal data as provided under applicable privacy laws. Please contact us for more information."
+        
+        # Legal basis for processing (GDPR)
+        replacements["{legal_basis_text}"] = "We process your personal data based on one or more of the following legal bases: your consent, performance of a contract with you, compliance with legal obligations, protection of vital interests, public interest, or our legitimate business interests."
+        
+        # Apply all replacements
+        for key, val in replacements.items():
+            text = text.replace(key, str(val))
+        
+        return text
+        
+    except Exception as e:
+        print(f"Error generating policy text: {e}")
+        return f"Error generating policy: {str(e)}"
+
+
+# ==============================
+# Preview Route (IM-9: Live Preview)
+# ==============================
+@app.route("/api/preview", methods=["POST"])
+def preview_policy():
+    """
+    Generate live preview of privacy policy.
+    IM-9: Live Preview
+    IM-7: Clause Logic (uses generate_policy_text)
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        answers = data.get("answers", {})
+        template_title = data.get("template", "Default Template")
+        
+        # Generate policy text
+        policy_text = generate_policy_text(answers, template_title)
+        
+        return jsonify({
+            "preview": policy_text,
+            "generated_at": datetime.now(UTC).isoformat()
+        }), 200
+        
+    except Exception as e:
+        print(f"Error generating preview: {e}")
+        return jsonify({"error": "Failed to generate preview"}), 500
+
+
+# ==============================
+# Export Routes (IM-12: PDF Export, IM-13: DOCX Export)
+# ==============================
+@app.route("/api/export/pdf", methods=["POST"])
+def export_pdf():
+    """
+    Export privacy policy as PDF.
+    IM-12: PDF Export
+    """
+    try:
+        data = request.get_json()
+        content = data.get("content", "")
+        
+        if not content:
+            return jsonify({"error": "No content provided for export"}), 400
+        
+        # Create PDF buffer
+        buffer = io.BytesIO()
+        
+        # Create PDF with better formatting using reportlab
+        doc = SimpleDocTemplate(buffer, pagesize=letter,
+                               topMargin=0.75*inch, bottomMargin=0.75*inch,
+                               leftMargin=0.75*inch, rightMargin=0.75*inch)
+        
+        # Story to hold document elements
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Customize styles
+        title_style = styles['Heading1']
+        heading_style = styles['Heading2']
+        body_style = styles['BodyText']
+        body_style.fontSize = 11
+        body_style.leading = 14
+        
+        # Split content into paragraphs
+        paragraphs = content.split('\n\n')
+        
+        for para in paragraphs:
+            if para.strip():
+                # Detect if it's a heading (all caps or starts with digit)
+                if para.strip().isupper() and len(para.strip()) < 100:
+                    p = Paragraph(para.strip(), heading_style)
+                elif para.strip() and para.strip()[0].isdigit() and '. ' in para[:10]:
+                    p = Paragraph(para.strip(), heading_style)
+                else:
+                    # Regular paragraph
+                    para_text = para.replace('\n', '<br/>')
+                    p = Paragraph(para_text, body_style)
+                
+                story.append(p)
+                story.append(Spacer(1, 0.15*inch))
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name="privacy_policy.pdf",
+            mimetype="application/pdf"
+        )
+        
+    except Exception as e:
+        print(f"Error exporting PDF: {e}")
+        return jsonify({"error": "Failed to export PDF"}), 500
+
+
+@app.route("/api/export/docx", methods=["POST"])
+def export_docx():
+    """
+    Export privacy policy as DOCX.
+    IM-13: DOCX Export
+    """
+    try:
+        data = request.get_json()
+        content = data.get("content", "")
+        
+        if not content:
+            return jsonify({"error": "No content provided for export"}), 400
+        
+        # Create DOCX document
+        doc = Document()
+        
+        # Add main title
+        title = doc.add_heading("Privacy Policy", 0)
+        title.alignment = 1  # Center alignment
+        
+        # Split content into paragraphs
+        paragraphs = content.split('\n\n')
+        
+        for para in paragraphs:
+            if para.strip():
+                # Detect headings
+                if para.strip().isupper() and len(para.strip()) < 100:
+                    # Section heading
+                    doc.add_heading(para.strip(), level=2)
+                elif para.strip() and para.strip()[0].isdigit() and '. ' in para[:10]:
+                    # Numbered heading
+                    doc.add_heading(para.strip(), level=2)
+                else:
+                    # Regular paragraph
+                    p = doc.add_paragraph(para.strip())
+                    # Format paragraph
+                    for run in p.runs:
+                        run.font.size = Pt(11)
+                        run.font.name = 'Calibri'
+        
+        # Save to BytesIO buffer
+        file_stream = io.BytesIO()
+        doc.save(file_stream)
+        file_stream.seek(0)
+        
+        return send_file(
+            file_stream,
+            as_attachment=True,
+            download_name="privacy_policy.docx",
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        
+    except Exception as e:
+        print(f"Error exporting DOCX: {e}")
+        return jsonify({"error": "Failed to export DOCX"}), 500
+
+
+# ==============================
+# Health Check (CI/CD Requirement)
+# ==============================
+@app.route("/api/health")
+def health():
+    """
+    Health check endpoint for CI/CD pipeline.
+    Tests database connectivity and returns status.
+    """
+    try:
+        # Test database connection
+        client.admin.command('ping')
+        
+        return jsonify({
+            "status": "ok",
+            "time": datetime.now(UTC).isoformat(),
+            "database": "connected",
+            "version": "1.0.0"
+        }), 200
+        
+    except Exception as e:
+        print(f"Health check failed: {e}")
+        return jsonify({
+            "status": "error",
+            "time": datetime.now(UTC).isoformat(),
+            "database": "disconnected",
+            "error": str(e)
+        }), 500
+
+
+# ==============================
+# Error Handlers
+# ==============================
+@app.errorhandler(404)
+def not_found(error):
+    """Handle 404 errors."""
+    return jsonify({"error": "Resource not found"}), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle 500 errors."""
+    return jsonify({"error": "Internal server error"}), 500
+
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    """Handle 405 errors."""
+    return jsonify({"error": "Method not allowed"}), 405
+
+
+# ==============================
+# Run Application
+# ==============================
 if __name__ == "__main__":
-    app.run(debug=True)
+    # In production, use a production WSGI server like Gunicorn
+    # For development:
+    app.run(
+        debug=os.getenv("FLASK_DEBUG", "True") == "True",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 5000))
+    )
+
+
+
+
+

@@ -1,247 +1,1077 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Privacy Policy Generator</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f5f6fa; color:#222; }
-    .container { max-width:900px; margin:20px auto; padding:16px; background:#fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
-    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-    h1 { font-size:18px; margin:0; }
-    .row { display:flex; gap:12px; }
-    .col { flex:1; min-width:0; }
-    .panel { padding:12px; border:1px solid #eee; border-radius:6px; background:#fff; }
-    label { display:block; margin-bottom:6px; font-weight:600; }
-    input[type=text], input[type=email], select, textarea { width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:8px; }
-    button { padding:8px 12px; border-radius:6px; border:0; background:#2563eb; color:#fff; cursor:pointer; }
-    button.secondary { background:#6b7280; }
-    .nav { display:flex; gap:8px; margin-top:8px; }
-    .questions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-    .category { min-width:160px; }
-    .preview { white-space:pre-wrap; font-family:monospace; }
-    @media (max-width:700px) {
-      .row { flex-direction:column; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy Generator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        .main-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+            font-weight: 600;
+            border: none;
+            padding: 15px 25px;
+            transition: all 0.3s;
+        }
+        .nav-tabs .nav-link:hover {
+            background: #f8f9fa;
+            color: var(--primary-color);
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background: white;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        .category-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+        .category-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .question-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .question-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .required-mark {
+            color: var(--danger-color);
+            margin-left: 3px;
+        }
+        #preview-content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
+            min-height: 500px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        .btn-custom {
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn-preview {
+            background: var(--primary-color);
+            color: white;
+        }
+        .btn-preview:hover {
+            background: #3a7bc8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+        }
+        .btn-export {
+            background: var(--success-color);
+            color: white;
+        }
+        .btn-export:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .admin-panel {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .login-form {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .template-selector {
+            margin-bottom: 20px;
+        }
+        .alert-custom {
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: var(--secondary-color);
+        }
+        .inline-edit {
+            border: 2px dashed #dee2e6;
+            padding: 20px;
+            border-radius: 10px;
+            min-height: 300px;
+        }
+        #editablePreview {
+            outline: none;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            min-height: 400px;
+        }
+        .admin-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .admin-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        .badge-custom {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+        .progress-indicator {
+            margin: 20px 0;
+        }
+        .question-progress {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Privacy Policy Generator</h1>
-      <div>
-        <button id="loginBtn">Admin Login</button>
-      </div>
-    </header>
+    <div class="container">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header">
+                <h1><i class="fas fa-shield-alt"></i> Privacy Policy Generator</h1>
+                <p class="mb-0">Create professional privacy policies in minutes</p>
+            </div>
 
-    <div class="row">
-      <div class="col panel">
-        <h3>Questionnaire</h3>
-        <div id="questionsContainer">Loading questions...</div>
-        <div class="nav">
-          <button id="prevBtn" class="secondary">Prev</button>
-          <button id="nextBtn">Next</button>
-          <button id="previewBtn" class="secondary">Live Preview</button>
-        </div>
-      </div>
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="generator-tab" data-bs-toggle="tab" href="#generator" role="tab">
+                        <i class="fas fa-file-alt"></i> Generator
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="preview-tab" data-bs-toggle="tab" href="#preview" role="tab">
+                        <i class="fas fa-eye"></i> Preview & Edit
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="export-tab" data-bs-toggle="tab" href="#export" role="tab">
+                        <i class="fas fa-download"></i> Export
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="admin-tab" data-bs-toggle="tab" href="#admin" role="tab">
+                        <i class="fas fa-cog"></i> Admin
+                    </a>
+                </li>
+            </ul>
 
-      <div class="col panel">
-        <h3>Preview & Export</h3>
-        <div id="preview" class="preview">No preview yet.</div>
-        <div style="margin-top:8px;">
-          <button id="editBtn" class="secondary">Inline Edit</button>
-          <button id="exportPdf">Export PDF</button>
-          <button id="exportDocx" class="secondary">Export DOCX</button>
+            <!-- Tab Content -->
+            <div class="tab-content p-4" id="mainTabContent">
+                <!-- Generator Tab (IM-2, IM-3) -->
+                <div class="tab-pane fade show active" id="generator" role="tabpanel">
+                    <h4 class="mb-4">Step 1: Answer Questions</h4>
+                    
+                    <!-- Template Selector (IM-6) -->
+                    <div class="template-selector">
+                        <label class="form-label fw-bold">Select Template:</label>
+                        <select class="form-select" id="templateSelect">
+                            <option value="Default Template">Default Template</option>
+                        </select>
+                    </div>
+
+                    <!-- Progress Indicator -->
+                    <div class="progress-indicator">
+                        <div class="progress">
+                            <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="question-progress">
+                            <span id="progressText">0 of 0 required questions answered</span>
+                        </div>
+                    </div>
+
+                    <!-- Questions Section (IM-2 Categorized Questions) -->
+                    <div id="questions-container">
+                        <div class="loading">
+                            <i class="fas fa-spinner fa-spin fa-3x"></i>
+                            <p class="mt-3">Loading questions...</p>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons (IM-3) -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <button class="btn btn-secondary btn-custom" id="resetBtn">
+                            <i class="fas fa-redo"></i> Reset Form
+                        </button>
+                        <button class="btn btn-preview btn-custom" id="generatePreviewBtn">
+                            <i class="fas fa-eye"></i> Generate Preview
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview & Edit Tab (IM-9, IM-10) -->
+                <div class="tab-pane fade" id="preview" role="tabpanel">
+                    <h4 class="mb-4">Step 2: Preview & Edit</h4>
+                    
+                    <div class="mb-3">
+                        <button class="btn btn-preview btn-custom" id="refreshPreviewBtn">
+                            <i class="fas fa-sync"></i> Refresh Preview
+                        </button>
+                        <button class="btn btn-secondary btn-custom" id="toggleEditBtn">
+                            <i class="fas fa-edit"></i> Enable Inline Editing
+                        </button>
+                    </div>
+
+                    <!-- Live Preview (IM-9) -->
+                    <div id="preview-display">
+                        <div id="preview-content">
+                            <p class="text-muted text-center">No preview generated yet. Go to Generator tab and click "Generate Preview".</p>
+                        </div>
+                    </div>
+
+                    <!-- Inline Edit Mode (IM-10) -->
+                    <div id="inline-edit" class="inline-edit" style="display: none;">
+                        <div id="editablePreview" contenteditable="true">
+                            Click "Enable Inline Editing" to edit the policy directly.
+                        </div>
+                        <button class="btn btn-success btn-custom mt-3" id="saveEditBtn">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Export Tab (IM-12, IM-13) -->
+                <div class="tab-pane fade" id="export" role="tabpanel">
+                    <h4 class="mb-4">Step 3: Export Your Policy</h4>
+                    
+                    <div class="alert alert-info alert-custom">
+                        <i class="fas fa-info-circle"></i> Your privacy policy is ready to export in various formats.
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+                                    <h5>Export as PDF</h5>
+                                    <p class="text-muted">Download a professionally formatted PDF document</p>
+                                    <button class="btn btn-export btn-custom" id="exportPdfBtn">
+                                        <i class="fas fa-file-pdf"></i> Download PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-word fa-4x text-primary mb-3"></i>
+                                    <h5>Export as DOCX</h5>
+                                    <p class="text-muted">Download an editable Word document</p>
+                                    <button class="btn btn-export btn-custom" id="exportDocxBtn">
+                                        <i class="fas fa-file-word"></i> Download DOCX
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Preview -->
+                    <div class="mt-4">
+                        <h5>Current Policy Preview:</h5>
+                        <div id="export-preview" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">
+                            <p class="text-muted">No policy to export yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Tab (IM-15, IM-16, IM-18, IM-19) -->
+                <div class="tab-pane fade" id="admin" role="tabpanel">
+                    <!-- Login Form (IM-19) -->
+                    <div id="login-section" class="login-form">
+                        <h4 class="text-center mb-4"><i class="fas fa-lock"></i> Admin Login</h4>
+                        <div id="login-error" class="alert alert-danger" style="display:none;"></div>
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" id="loginUsername" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Admin Panel (IM-15, IM-16) -->
+                    <div id="admin-panel" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4><i class="fas fa-cog"></i> Administration Panel</h4>
+                            <button class="btn btn-danger" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </div>
+
+                        <!-- Admin Sub-tabs -->
+                        <ul class="nav nav-pills mb-4" id="adminSubTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#manage-questions">
+                                    <i class="fas fa-question-circle"></i> Manage Questions
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#manage-templates">
+                                    <i class="fas fa-file-contract"></i> Manage Templates
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <!-- Manage Questions (IM-15) -->
+                            <div class="tab-pane fade show active" id="manage-questions">
+                                <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                                    <i class="fas fa-plus"></i> Add New Question
+                                </button>
+                                
+                                <div class="table-responsive admin-table">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Key</th>
+                                                <th>Category</th>
+                                                <th>Question</th>
+                                                <th>Type</th>
+                                                <th>Required</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="questions-admin-list">
+                                            <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Manage Templates (IM-16) -->
+                            <div class="tab-pane fade" id="manage-templates">
+                                <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
+                                    <i class="fas fa-plus"></i> Add New Template
+                                </button>
+                                
+                                <div class="table-responsive admin-table">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th>Description</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="templates-admin-list">
+                                            <tr><td colspan="3" class="text-center">Loading...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
-    <section style="margin-top:16px;">
-      <h3>Template Management (Admin)</h3>
-      <div id="adminPanel">Login to manage templates and questions.</div>
-    </section>
-  </div>
+    <!-- Add Question Modal -->
+    <div class="modal fade" id="addQuestionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addQuestionForm">
+                        <div class="mb-3">
+                            <label class="form-label">Key (unique identifier)</label>
+                            <input type="text" class="form-control" id="newQuestionKey" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <input type="text" class="form-control" id="newQuestionCategory" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Question</label>
+                            <input type="text" class="form-control" id="newQuestionText" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="newQuestionType">
+                                <option value="text">Text</option>
+                                <option value="email">Email</option>
+                                <option value="url">URL</option>
+                                <option value="boolean">Yes/No</option>
+                                <option value="textarea">Text Area</option>
+                                <option value="select">Select</option>
+                                <option value="checkbox">Checkbox</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Order</label>
+                            <input type="number" class="form-control" id="newQuestionOrder" value="999">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="newQuestionRequired">
+                            <label class="form-check-label" for="newQuestionRequired">Required</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveQuestionBtn">Save Question</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <script>
-    let questions = [];
-    let categorized = {};
-    let answers = {};
-    let qIndex = 0;
-    let categories = [];
-    let currentCategoryIndex = 0;
-    let token = null;
+    <!-- Add Template Modal -->
+    <div class="modal fade" id="addTemplateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTemplateForm">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" id="newTemplateTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control" id="newTemplateDesc">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Content (use placeholders like {company_name})</label>
+                            <textarea class="form-control" id="newTemplateContent" rows="10" required></textarea>
+                            <small class="text-muted">Available placeholders: {company_name}, {contact_email}, {website_url}, {jurisdiction}, {date}, {cookies_text}, {data_collection_text}, {data_usage_text}, {third_party_text}, {user_rights_text}, {data_retention}</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveTemplateBtn">Save Template</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    async function fetchQuestions() {
-      const res = await fetch('/api/questions');
-      const data = await res.json();
-      questions = data.questions || [];
-      categorized = data.categorized || {};
-      categories = Object.keys(categorized);
-      renderQuestion();
-    }
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global state
+        let allQuestions = [];
+        let categorizedQuestions = {};
+        let currentAnswers = {};
+        let adminToken = null;
+        let currentPolicyText = '';
 
-    function renderQuestion() {
-      const container = document.getElementById('questionsContainer');
-      container.innerHTML = '';
-      if (categories.length === 0) {
-        container.innerText = 'No questions found.';
-        return;
-      }
-      // show one category at a time to keep navigation simple
-      const catName = categories[currentCategoryIndex];
-      const catQs = categorized[catName] || [];
-      const catDiv = document.createElement('div');
-      catDiv.className = 'category';
-      const title = document.createElement('h4');
-      title.innerText = catName;
-      catDiv.appendChild(title);
-      catQs.forEach(q => {
-        const label = document.createElement('label');
-        label.innerText = q.label;
-        let input;
-        if (q.type === 'boolean') {
-          input = document.createElement('select');
-          input.innerHTML = '<option value="true">Yes</option><option value="false">No</option>';
-          input.value = answers[q.key] !== undefined ? String(answers[q.key]) : 'true';
-          input.onchange = () => answers[q.key] = (input.value === 'true');
-        } else {
-          input = document.createElement('input');
-          input.type = q.type === 'email' ? 'email' : 'text';
-          input.value = answers[q.key] || '';
-          input.oninput = () => answers[q.key] = input.value;
+        // Load questions on page load (IM-2)
+        async function loadQuestions() {
+            try {
+                const res = await fetch('/api/questions');
+                const data = await res.json();
+                allQuestions = data.questions;
+                categorizedQuestions = data.categorized;
+                renderQuestions();
+                updateProgress();
+            } catch (error) {
+                showError('Failed to load questions');
+            }
         }
-        catDiv.appendChild(label);
-        catDiv.appendChild(input);
-      });
-      container.appendChild(catDiv);
-    }
 
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      if (currentCategoryIndex > 0) currentCategoryIndex--;
-      renderQuestion();
-    });
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      if (currentCategoryIndex < categories.length - 1) currentCategoryIndex++;
-      renderQuestion();
-    });
+        // Render categorized questions (IM-2)
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
 
-    document.getElementById('previewBtn').addEventListener('click', async () => {
-      const res = await fetch('/api/preview', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({answers})
-      });
-      const data = await res.json();
-      document.getElementById('preview').innerText = data.policy || 'No preview';
-    });
+            for (const [category, questions] of Object.entries(categorizedQuestions)) {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-section';
+                categoryDiv.innerHTML = `<div class="category-title"><i class="fas fa-folder"></i> ${category}</div>`;
 
-    document.getElementById('editBtn').addEventListener('click', () => {
-      const p = document.getElementById('preview');
-      const ta = document.createElement('textarea');
-      ta.style.width = '100%';
-      ta.style.height = '200px';
-      ta.value = p.innerText;
-      p.parentNode.replaceChild(ta, p);
-      const save = document.createElement('button');
-      save.innerText = 'Save Inline Edit';
-      save.style.marginTop = '8px';
-      save.onclick = () => {
-        const newPreview = document.createElement('div');
-        newPreview.id = 'preview';
-        newPreview.className = 'preview';
-        newPreview.innerText = ta.value;
-        ta.parentNode.replaceChild(newPreview, ta);
-        save.remove();
-      };
-      ta.parentNode.appendChild(save);
-    });
+                questions.forEach(q => {
+                    const questionDiv = createQuestionElement(q);
+                    categoryDiv.appendChild(questionDiv);
+                });
 
-    document.getElementById('exportPdf').addEventListener('click', async () => {
-      const res = await fetch('/api/export/pdf', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({answers})
-      });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'privacy_policy.pdf'; a.click();
-      } else {
-        alert('Export failed');
-      }
-    });
+                container.appendChild(categoryDiv);
+            }
 
-    document.getElementById('exportDocx').addEventListener('click', async () => {
-      const res = await fetch('/api/export/docx', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({answers})
-      });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'privacy_policy.docx'; a.click();
-      } else {
-        alert('Export failed');
-      }
-    });
-
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-      const u = prompt('Admin username', 'admin');
-      const p = prompt('Admin password', 'admin');
-      const res = await fetch('/api/login', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({username:u,password:p})
-      });
-      if (res.status === 200) {
-        const data = await res.json();
-        token = data.token;
-        alert('Login success. Token valid for '+ data.expires_in + 's.');
-        showAdminPanel();
-      } else {
-        alert('Login failed');
-      }
-    });
-
-    function showAdminPanel(){
-      const panel = document.getElementById('adminPanel');
-      panel.innerHTML = '';
-      const btnQs = document.createElement('button'); btnQs.innerText = 'Add question'; 
-      btnQs.onclick = async () => {
-        const id = prompt('id (unique)', 'q' + Date.now());
-        const label = prompt('label', 'New question');
-        const key = prompt('key', 'new_key');
-        const category = prompt('category', 'Misc');
-        const type = prompt('type (text|boolean|email)', 'text');
-        const body = {id,label,key,category,type,required:false};
-        const res = await fetch('/api/questions', {
-          method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-          body: JSON.stringify(body)
-        });
-        if (res.status === 201) {
-          alert('Added');
-          fetchQuestions();
-        } else {
-          alert('Error adding question');
+            // Add event listeners
+            document.querySelectorAll('.question-input').forEach(input => {
+                input.addEventListener('change', handleAnswerChange);
+                input.addEventListener('input', handleAnswerChange);
+            });
         }
-      };
-      const btnTpl = document.createElement('button'); btnTpl.innerText = 'Add template';
-      btnTpl.onclick = async () => {
-        const id = prompt('template id', 'tpl' + Date.now());
-        const name = prompt('template name', 'My Template');
-        const res = await fetch('/api/templates', {
-          method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-          body: JSON.stringify({id,name,clauses:{default_footer:'Default footer'}})
-        });
-        if (res.status === 201) { alert('Template added'); } else alert('error');
-      };
-      panel.appendChild(btnQs);
-      panel.appendChild(btnTpl);
-    }
 
-    // initial load
-    fetchQuestions();
-  </script>
+        // Create question element based on type
+        function createQuestionElement(question) {
+            const div = document.createElement('div');
+            div.className = 'question-item';
+            
+            const requiredMark = question.required ? '<span class="required-mark">*</span>' : '';
+            let inputHtml = '';
+
+            switch(question.type) {
+                case 'boolean':
+                    inputHtml = `
+                        <select class="form-select question-input" data-key="${question.key}">
+                            <option value="">Select...</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    `;
+                    break;
+                case 'textarea':
+                    inputHtml = `<textarea class="form-control question-input" data-key="${question.key}" rows="3"></textarea>`;
+                    break;
+                case 'select':
+                    inputHtml = `
+                        <select class="form-select question-input" data-key="${question.key}">
+                            <option value="">Select...</option>
+                            ${question.options?.map(opt => `<option value="${opt}">${opt}</option>`).join('') || ''}
+                        </select>
+                    `;
+                    break;
+                case 'checkbox':
+                    inputHtml = `
+                        <div class="checkbox-group">
+                            ${question.options?.map(opt => `
+                                <div class="form-check">
+                                    <input class="form-check-input question-checkbox" type="checkbox" value="${opt}" data-key="${question.key}" id="${question.key}_${opt}">
+                                    <label class="form-check-label" for="${question.key}_${opt}">${opt}</label>
+                                </div>
+                            `).join('') || ''}
+                        </div>
+                    `;
+                    break;
+                default:
+                    inputHtml = `<input type="${question.type}" class="form-control question-input" data-key="${question.key}">`;
+            }
+
+            div.innerHTML = `
+                <label class="question-label">${question.question}${requiredMark}</label>
+                ${inputHtml}
+            `;
+
+            // Handle checkbox special case
+            if (question.type === 'checkbox') {
+                div.querySelectorAll('.question-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => {
+                        const checked = Array.from(div.querySelectorAll('.question-checkbox:checked'))
+                            .map(cb => cb.value);
+                        currentAnswers[question.key] = checked;
+                        updateProgress();
+                    });
+                });
+            }
+
+            return div;
+        }
+
+        // Handle answer changes
+        function handleAnswerChange(e) {
+            const key = e.target.dataset.key;
+            currentAnswers[key] = e.target.value;
+            updateProgress();
+
+            // Handle conditional questions
+            checkConditionalQuestions();
+        }
+
+        // Check and show/hide conditional questions (IM-7)
+        function checkConditionalQuestions() {
+            allQuestions.forEach(q => {
+                if (q.dependsOn) {
+                    const parentValue = currentAnswers[q.dependsOn.key];
+                    const element = document.querySelector(`[data-key="${q.key}"]`)?.closest('.question-item');
+                    
+                    if (element) {
+                        if (parentValue == q.dependsOn.value) {
+                            element.style.display = 'block';
+                        } else {
+                            element.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update progress indicator
+        function updateProgress() {
+            const requiredQuestions = allQuestions.filter(q => q.required);
+            const answeredRequired = requiredQuestions.filter(q => {
+                const answer = currentAnswers[q.key];
+                return answer && answer !== '';
+            });
+
+            const percentage = (answeredRequired.length / requiredQuestions.length) * 100;
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = 
+                `${answeredRequired.length} of ${requiredQuestions.length} required questions answered`;
+        }
+
+        // Generate preview (IM-9)
+        async function generatePreview() {
+            try {
+                const template = document.getElementById('templateSelect').value;
+                const res = await fetch('/api/preview', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        answers: currentAnswers,
+                        template: template
+                    })
+                });
+
+                const data = await res.json();
+                currentPolicyText = data.preview;
+                
+                document.getElementById('preview-content').textContent = currentPolicyText;
+                document.getElementById('editablePreview').textContent = currentPolicyText;
+                document.getElementById('export-preview').textContent = currentPolicyText;
+                
+                showSuccess('Preview generated successfully!');
+                
+                // Switch to preview tab
+                const previewTab = new bootstrap.Tab(document.getElementById('preview-tab'));
+                previewTab.show();
+            } catch (error) {
+                showError('Failed to generate preview');
+            }
+        }
+
+        // Toggle inline editing (IM-10)
+        let editMode = false;
+        document.getElementById('toggleEditBtn').addEventListener('click', () => {
+            editMode = !editMode;
+            
+            if (editMode) {
+                document.getElementById('preview-display').style.display = 'none';
+                document.getElementById('inline-edit').style.display = 'block';
+                document.getElementById('toggleEditBtn').innerHTML = '<i class="fas fa-eye"></i> View Preview';
+            } else {
+                document.getElementById('preview-display').style.display = 'block';
+                document.getElementById('inline-edit').style.display = 'none';
+                document.getElementById('toggleEditBtn').innerHTML = '<i class="fas fa-edit"></i> Enable Inline Editing';
+            }
+        });
+
+        // Save edited content (IM-10)
+        document.getElementById('saveEditBtn').addEventListener('click', () => {
+            currentPolicyText = document.getElementById('editablePreview').innerText;
+            document.getElementById('preview-content').textContent = currentPolicyText;
+            document.getElementById('export-preview').textContent = currentPolicyText;
+            showSuccess('Changes saved!');
+        });
+
+        // Export PDF (IM-12)
+        document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/export/pdf', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({content: currentPolicyText})
+                });
+
+                const blob = await res.blob();
+                downloadFile(blob, 'privacy_policy.pdf');
+                showSuccess('PDF downloaded successfully!');
+            } catch (error) {
+                showError('Failed to export PDF');
+            }
+        });
+
+        // Export DOCX (IM-13)
+        document.getElementById('exportDocxBtn').addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/export/docx', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({content: currentPolicyText})
+                });
+
+                const blob = await res.blob();
+                downloadFile(blob, 'privacy_policy.docx');
+                showSuccess('DOCX downloaded successfully!');
+            } catch (error) {
+                showError('Failed to export DOCX');
+            }
+        });
+
+        // Helper function to download files
+        function downloadFile(blob, filename) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // Admin Login (IM-19)
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    adminToken = data.token;
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'block';
+                    showSuccess('Login successful!');
+                    loadAdminData();
+                } else {
+                    document.getElementById('login-error').textContent = data.error;
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (error) {
+                showError('Login failed');
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {'Authorization': adminToken}
+                });
+                
+                adminToken = null;
+                document.getElementById('login-section').style.display = 'block';
+                document.getElementById('admin-panel').style.display = 'none';
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                showSuccess('Logged out successfully');
+            } catch (error) {
+                showError('Logout failed');
+            }
+        });
+
+        // Load admin data (IM-15, IM-16)
+        async function loadAdminData() {
+            await loadAdminQuestions();
+            await loadAdminTemplates();
+        }
+
+        // Load questions for admin panel (IM-15)
+        async function loadAdminQuestions() {
+            try {
+                const res = await fetch('/api/questions');
+                const data = await res.json();
+                
+                const tbody = document.getElementById('questions-admin-list');
+                tbody.innerHTML = '';
+
+                data.questions.forEach(q => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${q.key}</td>
+                        <td><span class="badge bg-primary">${q.category}</span></td>
+                        <td>${q.question}</td>
+                        <td><span class="badge bg-secondary">${q.type}</span></td>
+                        <td>${q.required ? '<span class="badge bg-danger">Yes</span>' : '<span class="badge bg-success">No</span>'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${q.key}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                showError('Failed to load questions');
+            }
+        }
+
+        // Load templates for admin panel (IM-16)
+        async function loadAdminTemplates() {
+            try {
+                const res = await fetch('/api/templates');
+                const data = await res.json();
+                
+                const tbody = document.getElementById('templates-admin-list');
+                tbody.innerHTML = '';
+
+                data.templates.forEach(t => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${t.title}</strong></td>
+                        <td>${t.description || 'No description'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="deleteTemplate('${t.title}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Update template selector
+                const selector = document.getElementById('templateSelect');
+                selector.innerHTML = '';
+                data.templates.forEach(t => {
+                    const option = document.createElement('option');
+                    option.value = t.title;
+                    option.textContent = t.title;
+                    selector.appendChild(option);
+                });
+            } catch (error) {
+                showError('Failed to load templates');
+            }
+        }
+
+        // Add new question (IM-15)
+        document.getElementById('saveQuestionBtn').addEventListener('click', async () => {
+            const questionData = {
+                key: document.getElementById('newQuestionKey').value,
+                category: document.getElementById('newQuestionCategory').value,
+                question: document.getElementById('newQuestionText').value,
+                type: document.getElementById('newQuestionType').value,
+                order: parseInt(document.getElementById('newQuestionOrder').value),
+                required: document.getElementById('newQuestionRequired').checked
+            };
+
+            try {
+                const res = await fetch('/api/questions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': adminToken
+                    },
+                    body: JSON.stringify(questionData)
+                });
+
+                if (res.ok) {
+                    showSuccess('Question added successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('addQuestionModal')).hide();
+                    document.getElementById('addQuestionForm').reset();
+                    loadAdminQuestions();
+                    loadQuestions();
+                } else {
+                    const data = await res.json();
+                    showError(data.error || 'Failed to add question');
+                }
+            } catch (error) {
+                showError('Failed to add question');
+            }
+        });
+
+        // Delete question (IM-15)
+        async function deleteQuestion(key) {
+            if (!confirm('Are you sure you want to delete this question?')) return;
+
+            try {
+                const res = await fetch(`/api/questions/${key}`, {
+                    method: 'DELETE',
+                    headers: {'Authorization': adminToken}
+                });
+
+                if (res.ok) {
+                    showSuccess('Question deleted successfully!');
+                    loadAdminQuestions();
+                    loadQuestions();
+                } else {
+                    showError('Failed to delete question');
+                }
+            } catch (error) {
+                showError('Failed to delete question');
+            }
+        }
+
+        // Add new template (IM-16)
+        document.getElementById('saveTemplateBtn').addEventListener('click', async () => {
+            const templateData = {
+                title: document.getElementById('newTemplateTitle').value,
+                description: document.getElementById('newTemplateDesc').value,
+                content: document.getElementById('newTemplateContent').value
+            };
+
+            try {
+                const res = await fetch('/api/templates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': adminToken
+                    },
+                    body: JSON.stringify(templateData)
+                });
+
+                if (res.ok) {
+                    showSuccess('Template added successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('addTemplateModal')).hide();
+                    document.getElementById('addTemplateForm').reset();
+                    loadAdminTemplates();
+                } else {
+                    const data = await res.json();
+                    showError(data.error || 'Failed to add template');
+                }
+            } catch (error) {
+                showError('Failed to add template');
+            }
+        });
+
+        // Delete template (IM-16)
+        async function deleteTemplate(title) {
+            if (!confirm('Are you sure you want to delete this template?')) return;
+
+            try {
+                const res = await fetch(`/api/templates/${encodeURIComponent(title)}`, {
+                    method: 'DELETE',
+                    headers: {'Authorization': adminToken}
+                });
+
+                if (res.ok) {
+                    showSuccess('Template deleted successfully!');
+                    loadAdminTemplates();
+                } else {
+                    showError('Failed to delete template');
+                }
+            } catch (error) {
+                showError('Failed to delete template');
+            }
+        }
+
+        // Load templates into selector
+        async function loadTemplates() {
+            try {
+                const res = await fetch('/api/templates');
+                const data = await res.json();
+                
+                const selector = document.getElementById('templateSelect');
+                selector.innerHTML = '';
+                
+                data.templates.forEach(t => {
+                    const option = document.createElement('option');
+                    option.value = t.title;
+                    option.textContent = t.title;
+                    selector.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load templates');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('generatePreviewBtn').addEventListener('click', generatePreview);
+        document.getElementById('refreshPreviewBtn').addEventListener('click', generatePreview);
+        
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset the form?')) {
+                currentAnswers = {};
+                document.querySelectorAll('.question-input').forEach(input => input.value = '');
+                document.querySelectorAll('.question-checkbox').forEach(cb => cb.checked = false);
+                updateProgress();
+                showSuccess('Form reset successfully!');
+            }
+        });
+
+        // Toast notification functions
+        function showSuccess(message) {
+            showToast(message, 'success');
+        }
+
+        function showError(message) {
+            showToast(message, 'danger');
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+            toast.style.zIndex = '9999';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadQuestions();
+            loadTemplates();
+        });
+
+        // Make delete functions global
+        window.deleteQuestion = deleteQuestion;
+        window.deleteTemplate = deleteTemplate;
+    </script>
 </body>
 </html>

@@ -16,5 +16,12 @@
     "clauses": {
       "default_footer": "Default footer"
     }
+  },
+  {
+    "id": "#123456",
+    "name": "New_template",
+    "clauses": {
+      "default_footer": "Default footer"
+    }
   }
 ]
